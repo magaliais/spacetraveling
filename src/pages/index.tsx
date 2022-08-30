@@ -28,7 +28,8 @@ interface HomeProps {
   postsPagination: PostPagination;
 }
 
-export default function Home() {
+export default function Home({ postsPagination }: HomeProps) {
+
   return (
     <>
       <Head>
@@ -36,46 +37,51 @@ export default function Home() {
       </Head>
       <main className={commonStyles.main}>
         <div className={styles.posts}>
-          <Link href="/post/1">
-            <a>
-              <h2>Título do Post</h2>
-              <p>Resumo do que fala o post de maneira geral somente para visualização</p>
-              <span>
-                <i><FiCalendar /></i> <time>19 Abr 2022</time>
-                <i><FiUser /></i> Gabriel Albuquerque
-              </span>
-            </a>
-          </Link>
-          <Link href="/post/2">
-            <a>
-              <h2>Título do Post 2</h2>
-              <p>Resumo do que fala o post de maneira geral somente para visualização</p>
-              <span>
-                <i><FiCalendar /></i> <time>13 Jun 2022</time>
-                <i><FiUser /></i> Gabriel Albuquerque
-              </span>
-            </a>
-          </Link>
-          <Link href="/post/2">
-            <a>
-              <h2>Título do Post 3</h2>
-              <p>Resumo do que fala o post de maneira geral somente para visualização</p>
-              <span>
-                <i><FiCalendar /></i> <time>09 Ago 2022</time>
-                <i><FiUser /></i> Gabriel Albuquerque
-              </span>
-            </a>
-          </Link>
+
+          {postsPagination.results.map(post => (
+            <Link href={`/posts/${post.uid}`}>
+              <a key={post.uid}>
+                <h2>{post.data.title}</h2>
+                <p>{post.data.subtitle}</p>
+                <span>
+                  <i><FiCalendar /></i> <time>{post.first_publication_date}</time>
+                  <i><FiUser /></i> {post.data.author}
+                </span>
+              </a>
+            </Link>
+          ))}
         </div>
-        <span className={styles.loadMore}>Carregar mais posts</span>
+
+        {postsPagination.next_page !== null && (
+          <span className={styles.loadMore}>Carregar mais posts</span>
+        )}
       </main>
     </>
   );
 }
 
-// export const getStaticProps = async () => {
-//   // const prismic = getPrismicClient({});
-//   // const postsResponse = await prismic.getByType(TODO);
+export const getStaticProps: GetStaticProps = async () => {
+  const prismic = getPrismicClient({});
+  const postsResponse = await prismic.getByType('post', {
+    pageSize: 2,
+  });
 
-//   // TODO
-// };
+  const posts = postsResponse.results.map(post => {
+    return {
+      uid: post.uid,
+      first_publication_date: post.first_publication_date, //TODO tratar o resultado,
+      data: {
+        title: post.data.title[0].text,
+        subtitle: post.data.subtitle[0].text,
+        author: post.data.author[0].text,
+      }
+    }
+  })
+
+  return {
+    props: { postsPagination: {
+      next_page: postsResponse.next_page,
+      results: posts,
+    } }
+  }
+};
