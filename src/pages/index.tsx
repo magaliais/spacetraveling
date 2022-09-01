@@ -8,6 +8,9 @@ import { FiUser, FiCalendar } from 'react-icons/fi';
 import commonStyles from '../styles/common.module.scss';
 import styles from './home.module.scss';
 import Head from 'next/head';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { useState } from 'react';
 
 interface Post {
   uid?: string;
@@ -29,6 +32,35 @@ interface HomeProps {
 }
 
 export default function Home({ postsPagination }: HomeProps) {
+  const [posts, setPosts] = useState(postsPagination.results);
+  const [nextPage, setNextPage] = useState(postsPagination.next_page);
+
+  async function handleLoadMore() {
+    await fetch(nextPage)
+      .then(response => {
+        return response.json();
+      })
+      .then(result => {
+        const updatedPosts = [...posts];
+
+        result.results.forEach(post => {
+          updatedPosts.push({
+            uid: post.uid,
+            first_publication_date: format(new Date(post.first_publication_date), 'PP', { locale: ptBR }),
+            data: {
+              title: post.data.title[0].text,
+              subtitle: post.data.subtitle[0].text,
+              author: post.data.author[0].text,
+            },
+          });
+        })
+        setPosts(updatedPosts);
+        setNextPage(result.next_page);
+      })
+      .catch(err => {
+        console.log(err)
+      })
+  }
 
   return (
     <>
@@ -38,9 +70,9 @@ export default function Home({ postsPagination }: HomeProps) {
       <main className={commonStyles.main}>
         <div className={styles.posts}>
 
-          {postsPagination.results.map(post => (
-            <Link href={`/posts/${post.uid}`}>
-              <a key={post.uid}>
+          {posts.map(post => (
+            <Link key={post.uid} href={`/post/${post.uid}`}>
+              <a>
                 <h2>{post.data.title}</h2>
                 <p>{post.data.subtitle}</p>
                 <span>
@@ -52,8 +84,8 @@ export default function Home({ postsPagination }: HomeProps) {
           ))}
         </div>
 
-        {postsPagination.next_page !== null && (
-          <span className={styles.loadMore}>Carregar mais posts</span>
+        {nextPage !== null && (
+          <span className={styles.loadMore} onClick={handleLoadMore} >Carregar mais posts</span>
         )}
       </main>
     </>
@@ -63,25 +95,28 @@ export default function Home({ postsPagination }: HomeProps) {
 export const getStaticProps: GetStaticProps = async () => {
   const prismic = getPrismicClient({});
   const postsResponse = await prismic.getByType('post', {
-    pageSize: 2,
+    pageSize: 4,
   });
 
   const posts = postsResponse.results.map(post => {
     return {
       uid: post.uid,
-      first_publication_date: post.first_publication_date, //TODO tratar o resultado,
+      first_publication_date: format(new Date(post.first_publication_date), "PP", { locale: ptBR }),
       data: {
         title: post.data.title[0].text,
         subtitle: post.data.subtitle[0].text,
         author: post.data.author[0].text,
-      }
-    }
+      },
+    };
   })
 
   return {
-    props: { postsPagination: {
-      next_page: postsResponse.next_page,
-      results: posts,
-    } }
+    props: { 
+      postsPagination: {
+        next_page: postsResponse.next_page,
+        results: posts,
+      },
+      revalidate: 60 * 60 * 24, //* 24 hours 
+    }
   }
 };
