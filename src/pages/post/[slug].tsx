@@ -60,6 +60,7 @@ export default function Post({post}: PostProps) {
 
     console.log(groupsArray)
 
+    // TODO estimar tempo de leitura
     // const paragraphsArray = groupsArray.reduce((acc, curr) => {
 
     // }, [])
