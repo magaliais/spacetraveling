@@ -1,1 +1,52 @@
-// TODO
+.main {
+  max-width: 1120px;
+  margin: 0 auto 5rem;
+  padding: 0 2rem;
+
+  header {
+    
+    h1 {
+      font-size: 3rem;
+      margin-top: 5rem;
+    }
+
+    p {
+      display: flex;
+      color: var(--gray-100);
+      margin-top: 1.5rem;
+
+      span {
+        margin-right: 1.5rem;
+        display: flex;
+      }
+      
+      i {
+        margin-right: 0.5rem;
+      }
+    }
+  }
+
+  article {
+    margin-top: 4rem;
+
+    section {
+      strong {
+        font-size: 2.25rem;
+        margin: 4rem 0;
+        display: block;
+      }
+
+      p {
+        line-height: 1.75rem;
+      }
+    }
+  }
+}
+
+.image {
+  width: 100%;
+}
+
+.content {
+  margin-top: 4rem;
+}
